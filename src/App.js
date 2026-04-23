@@ -1,177 +1,223 @@
 import React, { useState, useEffect } from "react";
-import "./App.css";
+import { Bar } from "react-chartjs-2";
+import "chart.js/auto";
 
 function App() {
-  const [habitName, setHabitName] = useState("");
+  const [habitInput, setHabitInput] = useState("");
+  const [habits, setHabits] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
 
-  const [habits, setHabits] = useState(() => {
-    const saved = localStorage.getItem("habits");
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  // ✅ LOAD (only once)
   useEffect(() => {
-    localStorage.setItem("habits", JSON.stringify(habits));
-  }, [habits]);
+    try {
+      const stored = localStorage.getItem("habits");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setHabits(parsed);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    setLoaded(true);
+  }, []);
 
-  // Add Habit
+  // ✅ SAVE (only after load)
+  useEffect(() => {
+    if (!loaded) return;
+    localStorage.setItem("habits", JSON.stringify(habits));
+  }, [habits, loaded]);
+
+  // ✅ ADD
   const addHabit = () => {
-    if (habitName.trim() === "") return;
+    if (!habitInput.trim()) return;
 
     const newHabit = {
       id: Date.now(),
-      name: habitName,
-      entries: []
+      name: habitInput.trim(),
+      completedDates: [],
+      streak: 0,
+      lastCompleted: null
     };
 
-    setHabits([...habits, newHabit]);
-    setHabitName("");
+    setHabits(prev => [...prev, newHabit]);
+    setHabitInput("");
   };
 
-  // Mark Today
-  const markToday = (id) => {
-    const today = new Date().toISOString().split("T")[0];
+  // ✅ COMPLETE
+  const markComplete = (id) => {
+    const today = new Date().toDateString();
 
-    setHabits((prev) =>
-      prev.map((h) => {
-        if (h.id === id) {
-          const exists = h.entries.find(e => e.date === today);
-          if (exists) return h;
+    setHabits(prev =>
+      prev.map(h => {
+        if (h.id !== id) return h;
+        if (h.completedDates.includes(today)) return h;
 
-          return {
-            ...h,
-            entries: [...h.entries, { date: today }]
-          };
+        let streak = 1;
+
+        if (h.lastCompleted) {
+          const diff =
+            (new Date(today) - new Date(h.lastCompleted)) /
+            (1000 * 60 * 60 * 24);
+
+          if (diff === 1) streak = h.streak + 1;
         }
-        return h;
+
+        return {
+          ...h,
+          completedDates: [...h.completedDates, today],
+          streak,
+          lastCompleted: today
+        };
       })
     );
   };
 
-  // Delete Habit
+  // ✅ DELETE
   const deleteHabit = (id) => {
-    setHabits(habits.filter(h => h.id !== id));
+    setHabits(prev => prev.filter(h => h.id !== id));
   };
 
-  // 🔥 Streak
-  const calculateStreak = (entries) => {
-    const sorted = [...entries].sort(
-      (a, b) => new Date(b.date) - new Date(a.date)
+  // ✅ EDIT
+  const editHabit = (id) => {
+    const newName = prompt("Edit habit:");
+    if (!newName) return;
+
+    setHabits(prev =>
+      prev.map(h =>
+        h.id === id ? { ...h, name: newName } : h
+      )
     );
+  };
 
-    let streak = 0;
-    let currentDate = new Date();
+  // ✅ RESET
+  const resetAll = () => {
+    if (window.confirm("Delete all habits?")) {
+      localStorage.removeItem("habits");
+      setHabits([]);
+    }
+  };
 
-    for (let i = 0; i < sorted.length; i++) {
-      const entryDate = new Date(sorted[i].date);
+  // ✅ FILTER + SEARCH
+  const filteredHabits = habits.filter(h => {
+    const matchSearch = h.name.toLowerCase().includes(search.toLowerCase());
 
-      const diff =
-        (currentDate - entryDate) / (1000 * 60 * 60 * 24);
+    if (filter === "active") return matchSearch && h.streak > 0;
+    if (filter === "inactive") return matchSearch && h.streak === 0;
 
-      if (Math.floor(diff) === streak) {
-        streak++;
-      } else {
-        break;
+    return matchSearch;
+  });
+
+  // ✅ ANALYTICS
+  const getStats = () => {
+    let total = habits.length;
+    let completions = 0;
+    let longest = 0;
+    let days = [0,0,0,0,0,0,0];
+
+    habits.forEach(h => {
+      completions += h.completedDates.length;
+      if (h.streak > longest) longest = h.streak;
+
+      h.completedDates.forEach(d => {
+        const day = new Date(d).getDay();
+        days[day]++;
+      });
+    });
+
+    return { total, completions, longest, days };
+  };
+
+  const stats = getStats();
+
+  const chartData = {
+    labels: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+    datasets: [
+      {
+        label: "Weekly Activity",
+        data: stats.days
       }
-    }
-
-    return streak;
+    ]
   };
 
-  // 📅 Last 7 Days
-  const getLast7Days = () => {
-    const days = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      days.push(d.toISOString().split("T")[0]);
-    }
-    return days;
+  // ✅ EXPORT
+  const exportData = () => {
+    const dataStr = JSON.stringify(habits);
+    navigator.clipboard.writeText(dataStr);
+    alert("Copied to clipboard");
   };
 
-  // 📊 Completion %
-  const getCompletion = (entries) => {
-    const last7 = getLast7Days();
-    const doneDays = last7.filter(day =>
-      entries.find(e => e.date === day)
-    ).length;
-
-    return Math.round((doneDays / 7) * 100);
+  // ✅ IMPORT
+  const importData = () => {
+    const input = prompt("Paste data:");
+    try {
+      const parsed = JSON.parse(input);
+      if (Array.isArray(parsed)) {
+        setHabits(parsed);
+      }
+    } catch {
+      alert("Invalid data");
+    }
   };
 
   return (
-    <div className="container">
-      <h1>Habit Tracker</h1>
+    <div style={{ padding: 20, maxWidth: 700, margin: "auto" }}>
+      <h1>🔥 Advanced Habit Tracker</h1>
 
-      <div className="input-section">
+      {/* INPUT */}
+      <div style={{ display: "flex", gap: 10 }}>
         <input
-          type="text"
-          placeholder="Enter habit..."
-          value={habitName}
-          onChange={(e) => setHabitName(e.target.value)}
+          value={habitInput}
+          onChange={(e) => setHabitInput(e.target.value)}
+          placeholder="New habit"
+          style={{ flex: 1 }}
         />
-        <button className="add-btn" onClick={addHabit}>
-          Add
-        </button>
+        <button onClick={addHabit}>Add</button>
       </div>
 
-      {habits.map((h) => (
-        <div key={h.id} className="habit-card">
-          <h3>{h.name}</h3>
+      {/* SEARCH + FILTER */}
+      <div style={{ marginTop: 10 }}>
+        <input
+          placeholder="Search..."
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <select onChange={(e) => setFilter(e.target.value)}>
+          <option value="all">All</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
 
-          <div className="btn-group">
-            <button
-              className="mark-btn"
-              onClick={() => markToday(h.id)}
-            >
-              Mark Today
-            </button>
+      {/* ACTIONS */}
+      <div style={{ marginTop: 10 }}>
+        <button onClick={resetAll}>Reset</button>
+        <button onClick={exportData}>Export</button>
+        <button onClick={importData}>Import</button>
+      </div>
 
-            <button
-              className="delete-btn"
-              onClick={() => deleteHabit(h.id)}
-            >
-              Delete
-            </button>
-          </div>
+      {/* STATS */}
+      <h2>📊 Analytics</h2>
+      <p>Total: {stats.total}</p>
+      <p>Completions: {stats.completions}</p>
+      <p>Longest Streak: {stats.longest}</p>
 
-          <div className="streak">
-            🔥 Streak: {calculateStreak(h.entries)}
-          </div>
+      <Bar data={chartData} />
 
-          {/* 📅 Calendar */}
-          <div className="calendar">
-            {getLast7Days().map((day, i) => {
-              const done = h.entries.find(e => e.date === day);
-
-              const label = new Date(day)
-                .toLocaleDateString("en-US", { weekday: "short" })[0];
-
-              return (
-                <div
-                  key={i}
-                  className="day-box"
-                  style={{
-                    backgroundColor: done ? "#4caf50" : "#444"
-                  }}
-                >
-                  {label}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* 📊 Progress */}
-          <div className="progress">
-            Progress: {getCompletion(h.entries)}%
-          </div>
-
-          <div className="entries">
-            {h.entries.map((e, i) => (
-              <div key={i}>{e.date}</div>
-            ))}
-          </div>
-        </div>
-      ))}
+      {/* LIST */}
+      <ul>
+        {filteredHabits.map(h => (
+          <li key={h.id}>
+            <b>{h.name}</b> | 🔥 {h.streak}
+            <br />
+            <button onClick={() => markComplete(h.id)}>Done</button>
+            <button onClick={() => editHabit(h.id)}>Edit</button>
+            <button onClick={() => deleteHabit(h.id)}>Delete</button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
