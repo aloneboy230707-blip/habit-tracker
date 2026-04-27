@@ -119,7 +119,7 @@ function App() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Enter habit"
+          placeholder="jayaram"
         />
         <button onClick={addHabit}>Add</button>
       </div>
