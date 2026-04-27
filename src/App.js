@@ -113,7 +113,7 @@ function App() {
 
   return (
     <div className="container">
-      <h1>🔥 Habit Tracker</h1>
+      <h1>🔥TEST CHANGE FROM GIT</h1>
 
       <div className="input-box">
         <input
