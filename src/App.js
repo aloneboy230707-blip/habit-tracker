@@ -1,141 +1,171 @@
-import React, { useState, useEffect } from "react";
-import "./App.css";
+import React, { useEffect, useState } from "react";
+import { auth, db } from "./firebase";
 
-import { db } from "./firebase";
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged
+} from "firebase/auth";
+
 import {
   collection,
   addDoc,
-  getDocs,
   deleteDoc,
-  updateDoc,
-  doc
+  doc,
+  setDoc,
+  onSnapshot
 } from "firebase/firestore";
 
 function App() {
+  const [user, setUser] = useState(null);
   const [habits, setHabits] = useState([]);
   const [input, setInput] = useState("");
+  const [xp, setXp] = useState(0);
 
-  // 🔥 CHECK DB + LOAD
+  // =========================
+  // AUTH LISTENER
+  // =========================
   useEffect(() => {
-    console.log("DB VALUE:", db);
-    loadHabits();
-  }, []);
-
-  // ===== LOAD DATA =====
-  const loadHabits = async () => {
-    try {
-      if (!db) {
-        console.error("DB NOT INITIALIZED");
-        return;
-      }
-
-      const querySnapshot = await getDocs(collection(db, "habits"));
-
-      const list = querySnapshot.docs.map((docItem) => ({
-        id: docItem.id,
-        ...docItem.data(),
-      }));
-
-      setHabits(list);
-    } catch (error) {
-      console.error("LOAD ERROR:", error);
-    }
-  };
-
-  // ===== ADD HABIT =====
-  const addHabit = async () => {
-    console.log("CLICKED");
-
-    if (!input.trim()) return;
-
-    try {
-      if (!db) {
-        console.error("DB NOT INITIALIZED");
-        return;
-      }
-
-      await addDoc(collection(db, "habits"), {
-        name: input,
-        history: {},
-        createdAt: new Date(),
-      });
-      const testDB = async () => {
-  try {
-    console.log("TEST START");
-
-    const ref = await addDoc(collection(db, "test"), {
-      name: "test data",
-      time: new Date()
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
     });
 
-    console.log("SUCCESS ID:", ref.id);
+    return () => unsubscribe();
+  }, []);
 
-  } catch (err) {
-    console.error("TEST ERROR:", err);
-  }
-};
-      console.log("ADDED SUCCESS");
+  // =========================
+  // REAL-TIME DATA
+  // =========================
+  useEffect(() => {
+    if (!user) return;
 
-      setInput("");
-      loadHabits();
-    } catch (error) {
-      console.error("ADD ERROR:", error);
-    }
+    const habitsRef = collection(db, "users", user.uid, "habits");
+
+    const unsubHabits = onSnapshot(habitsRef, (snapshot) => {
+      const list = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setHabits(list);
+    });
+
+    const userRef = doc(db, "users", user.uid);
+
+    const unsubUser = onSnapshot(userRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setXp(docSnap.data().xp || 0);
+      }
+    });
+
+    return () => {
+      unsubHabits();
+      unsubUser();
+    };
+  }, [user]);
+
+  // =========================
+  // LOGIN
+  // =========================
+  const login = async () => {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
   };
 
-  // ===== MARK DONE =====
-  const markDone = async (habit) => {
-    try {
-      const today = new Date().toISOString().split("T")[0];
-
-      const ref = doc(db, "habits", habit.id);
-
-      const updatedHistory = habit.history || {};
-      updatedHistory[today] = !updatedHistory[today];
-
-      await updateDoc(ref, { history: updatedHistory });
-
-      loadHabits();
-    } catch (error) {
-      console.error("UPDATE ERROR:", error);
-    }
+  // =========================
+  // LOGOUT
+  // =========================
+  const logout = async () => {
+    await signOut(auth);
   };
 
-  // ===== DELETE =====
+  // =========================
+  // ADD HABIT
+  // =========================
+  const addHabit = async () => {
+    if (!input.trim()) return;
+
+    await addDoc(collection(db, "users", user.uid, "habits"), {
+      name: input,
+      streak: 0
+    });
+
+    setInput("");
+  };
+
+  // =========================
+  // DELETE
+  // =========================
   const deleteHabit = async (id) => {
-    try {
-      await deleteDoc(doc(db, "habits", id));
-      loadHabits();
-    } catch (error) {
-      console.error("DELETE ERROR:", error);
-    }
+    await deleteDoc(doc(db, "users", user.uid, "habits", id));
   };
+
+  // =========================
+  // MARK DONE
+  // =========================
+  const markDone = async (habit) => {
+    const newXP = xp + 10;
+
+    await setDoc(
+      doc(db, "users", user.uid),
+      { xp: newXP },
+      { merge: true }
+    );
+
+    await setDoc(
+      doc(db, "users", user.uid, "habits", habit.id),
+      { streak: habit.streak + 1 },
+      { merge: true }
+    );
+  };
+
+  // =========================
+  // CALCULATIONS
+  // =========================
+  const level = Math.floor(xp / 100) + 1;
+  const progress = xp % 100;
+
+  // =========================
+  // UI
+  // =========================
+  if (!user) {
+    return (
+      <div className="app">
+        <h1>🔥 Habit Tracker</h1>
+        <button onClick={login}>Login with Google</button>
+      </div>
+    );
+  }
 
   return (
-    <div className="container">
-      <h1>🔥TEST CHANGE FROM GIT</h1>
+    <div className="app">
+      <h1>🔥 Habit Tracker</h1>
 
-      <div className="input-box">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="jayaram"
-        />
-        <button onClick={addHabit}>Add</button>
+      <button onClick={logout}>Logout</button>
+
+      <h2>XP: {xp}</h2>
+      <h3>Level: {level}</h3>
+
+      <div className="progress-bar">
+        <div className="progress" style={{ width: `${progress}%` }}></div>
       </div>
 
-      {habits.length === 0 ? (
-        <p>No habits yet</p>
-      ) : (
-        habits.map((h) => (
-          <div key={h.id} className="card">
-            <h3>{h.name}</h3>
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Add habit"
+      />
+      <button onClick={addHabit}>Add</button>
 
-            <button onClick={() => markDone(h)}>Done</button>
-            <button onClick={() => deleteHabit(h.id)}>Delete</button>
-          </div>
-        ))
-      )}
+      {habits.map((h) => (
+        <div key={h.id} className="card">
+          <h3>{h.name}</h3>
+          <p>🔥 Streak: {h.streak}</p>
+
+          <button onClick={() => markDone(h)}>Done</button>
+          <button onClick={() => deleteHabit(h.id)}>Delete</button>
+        </div>
+      ))}
     </div>
   );
 }
