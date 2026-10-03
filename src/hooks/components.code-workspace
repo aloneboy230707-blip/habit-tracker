@@ -1,0 +1,34 @@
+{
+	"folders": [
+		{
+			"path": "../components"
+		},
+		{
+			"path": "../config"
+		},
+		{
+			"path": "../constants"
+		},
+		{
+			"path": "../context"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../layouts"
+		},
+		{
+			"path": "../pages"
+		},
+		{
+			"path": "../services"
+		},
+		{
+			"path": "../styles"
+		},
+		{
+			"path": "../utils"
+		}
+	]
+}
