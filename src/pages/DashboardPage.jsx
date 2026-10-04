@@ -21,6 +21,7 @@ import StreakGraph from "../components/StreakGraph";
 import HabitCalendar from "../components/HabitCalendar";
 import AICoach from "../components/AICoach";
 import AICoachChat from "../components/AICoachChat";
+
 function DashboardPage({
   user,
   habits,
@@ -45,73 +46,154 @@ function DashboardPage({
 
   selectedHabit,
 }) {
+  // =========================================================
+  // TODAY
+  // =========================================================
+
   const today = new Date()
-  .toISOString()
-  .split("T")[0];
+    .toISOString()
+    .split("T")[0];
 
-const remainingHabits = habits.filter(
-  habit =>
-    !(habit.completedDates || [])
-      .includes(today)
-);
+  // =========================================================
+  // TODAY'S HABIT COMPLETION
+  // =========================================================
 
-const completionPercentage =
-  habits.length === 0
-    ? 0
-    : Math.round(
-        ((habits.length - remainingHabits.length) /
-          habits.length) *
-          100
-      );
+  const completedToday = habits.filter(
+    (habit) =>
+      (habit.completedDates || []).includes(today)
+  ).length;
 
-return (
+  const totalHabits = habits.length;
+
+  const completionPercentage =
+    totalHabits === 0
+      ? 0
+      : Math.round(
+          (completedToday / totalHabits) * 100
+        );
+
+  // =========================================================
+  // TODAY'S REMAINING HABITS
+  // =========================================================
+
+  const remainingHabits = habits.filter(
+    (habit) =>
+      !(habit.completedDates || []).includes(today)
+  );
+
+  // =========================================================
+  // SAFE DAILY GOAL
+  // =========================================================
+
+  const safeDailyGoal = Number(dailyGoal) || 0;
+
+  const dailyGoalPercentage =
+    safeDailyGoal === 0
+      ? 0
+      : Math.min(
+          100,
+          Math.round(
+            (todayCompleted / safeDailyGoal) * 100
+          )
+        );
+
+  // =========================================================
+  // UI
+  // =========================================================
+
+  return (
     <>
+      {/* =====================================================
+          PROFILE
+      ===================================================== */}
+
       <UserProfile
         user={user}
         habits={habits}
+        totalXP={totalXP}
+        level={level}
       />
 
+      {/* =====================================================
+          DAILY QUOTE
+      ===================================================== */}
+
       <DailyQuote />
+
+      {/* =====================================================
+          DAILY GOAL
+      ===================================================== */}
+
       <DailyGoalBox
         dailyGoal={dailyGoal}
         todayCompleted={todayCompleted}
       />
+
+      {/* =====================================================
+          DASHBOARD STATS
+      ===================================================== */}
+
+      <DashboardStats
+        habits={habits}
+      />
+
+      {/* =====================================================
+          CALENDAR
+      ===================================================== */}
+
       <CalendarSection
-    selectedDate={selectedDate}
-    setSelectedDate={setSelectedDate}
-    habits={habits}
-    heatmapData={heatmapData}
-  />
-  <WeeklyChart
-    habits={habits}
-  />
-  <MonthlyChart
-      habits={habits}
-    />
-    <StreakGraph habits={habits} />
-    {selectedHabit && (
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        habits={habits}
+        heatmapData={heatmapData}
+      />
 
-  <HabitCalendar
-    habit={selectedHabit}
-  />
+      {/* =====================================================
+          CHARTS
+      ===================================================== */}
 
-)}
-    
-  
+      <WeeklyChart
+        habits={habits}
+      />
+
+      <MonthlyChart
+        habits={habits}
+      />
+
+      <StreakGraph
+        habits={habits}
+      />
+
+      {/* =====================================================
+          SELECTED HABIT CALENDAR
+      ===================================================== */}
+
+      {selectedHabit && (
+        <HabitCalendar
+          habit={selectedHabit}
+        />
+      )}
+
+      {/* =====================================================
+          MAIN DASHBOARD GRID
+      ===================================================== */}
 
       <div className="dashboard-grid">
 
-        <DashboardStats
+        {/* AI COACH */}
+
+        <AICoach
+          user={user}
           habits={habits}
         />
-       <AICoach
-  user={user}
-  habits={habits}
-/>
-<AICoachChat
-  habits={habits}
-/>
 
+        {/* AI COACH CHAT */}
+
+        <AICoachChat
+          habits={habits}
+        />
+
+        {/* XP CARD */}
 
         <XPCard
           totalXP={totalXP}
@@ -120,24 +202,35 @@ return (
           nextLevelXP={nextLevelXP}
           rank={rank}
         />
+
+        {/* TODAY'S PROGRESS */}
+
         <div className="progress-card">
 
-  <h3>Today's Progress</h3>
+          <h3>
+            Today's Progress
+          </h3>
 
-  <h1>{completionPercentage}%</h1>
+          <h1>
+            {completionPercentage}%
+          </h1>
 
-  <progress
-    value={completionPercentage}
-    max="100"
-  ></progress>
+          <progress
+            value={completionPercentage}
+            max="100"
+          ></progress>
 
-  <p>
-    {todayCompleted}/{dailyGoal} Habits Completed
-  </p>
+          <p>
+            {completedToday}/{totalHabits} Habits Completed
+          </p>
 
-</div>
+        </div>
 
       </div>
+
+      {/* =====================================================
+          STATISTICS SECTION
+      ===================================================== */}
 
       <div className="section">
 
@@ -155,78 +248,122 @@ return (
         />
 
       </div>
-      <div className="remaining-card">
 
-  <h2>
-    📋 Today's Remaining Habits
-  </h2>
+     {/* =====================================================
+    TODAY'S REMAINING HABITS
+    ===================================================== */}
 
-  {
-    remainingHabits.length === 0 ? (
+<div className="remaining-card premium-remaining-card">
+
+  <div className="remaining-header">
+
+    <div>
+      <span className="remaining-eyebrow">
+        TODAY'S ROUTINE
+      </span>
+
+      <h2>
+        📋 Today's Remaining Habits
+      </h2>
 
       <p>
-        🎉 All habits completed!
+        Complete these habits to finish today's routine.
       </p>
+    </div>
 
-    ) : (
+    <div className="remaining-count-badge">
+      {remainingHabits.length}
+      <span>left</span>
+    </div>
 
-      <>
-        <ul>
+  </div>
 
-          {remainingHabits.map(habit => (
+  {remainingHabits.length === 0 ? (
 
-            <li key={habit.id}>
+    <div className="remaining-empty">
 
-              ☐ {habit.name}
+      <div className="remaining-empty-icon">
+        🎉
+      </div>
 
-            </li>
-
-          ))}
-
-        </ul>
+      <div>
+        <strong>
+          All habits completed!
+        </strong>
 
         <p>
-
-          <strong>
-
-            {remainingHabits.length}
-
-          </strong>
-
-          {" "}Habit(s) Remaining
-
+          Excellent work. You've completed today's routine.
         </p>
+      </div>
 
-      </>
+    </div>
 
-    )
-  }
+  ) : (
+
+    <>
+
+      <div className="remaining-list">
+
+        {remainingHabits.map((habit, index) => (
+
+          <div
+            key={habit.id}
+            className="remaining-habit-item"
+          >
+
+            <div className="remaining-habit-number">
+              {String(index + 1).padStart(2, "0")}
+            </div>
+
+            <div className="remaining-habit-checkbox">
+              ☐
+            </div>
+
+            <div className="remaining-habit-info">
+
+              <strong>
+                {habit.name}
+              </strong>
+
+              <span>
+                {habit.category || "General"}
+              </span>
+
+            </div>
+
+            <div className="remaining-habit-status">
+              Pending
+            </div>
+
+          </div>
+
+        ))}
+
+      </div>
+
+      <div className="remaining-footer">
+
+        <span>🔥</span>
+
+        <strong>
+          {remainingHabits.length}
+        </strong>
+
+        <span>
+          habit{remainingHabits.length !== 1 ? "s" : ""} remaining today
+        </span>
+
+      </div>
+
+    </>
+
+  )}
 
 </div>
-<div className="progress-card">
 
-  <h2>📊 Today's Progress</h2>
-
-  <h1>{completionPercentage}%</h1>
-
-  <progress
-    value={completionPercentage}
-    max="100"
-  />
-
-  <p>
-
-    {habits.length - remainingHabits.length}
-
-    {" / "}
-
-    {habits.length}
-
-    {" "}Habits Completed
-
-  </p>
-
-</div>
+      {/* =====================================================
+          INSIGHTS + CHALLENGES
+      ===================================================== */}
 
       <div className="section">
 
@@ -240,46 +377,183 @@ return (
           level={level}
         />
 
-        <div className="section">
+        {/* ===================================================
+            AI HABIT SUGGESTIONS
+        =================================================== */}
 
-          <h2>🤖 AI Habit Suggestions</h2>
+        <div className="premium-ai-suggestions">
+
+          <div className="ai-suggestion-header">
+
+            <div className="ai-suggestion-title-area">
+
+              <span className="ai-suggestion-eyebrow">
+                AI POWERED RECOMMENDATIONS
+              </span>
+
+              <h2>
+                🤖 AI Habit Suggestions
+              </h2>
+
+              <p>
+                Personalized habit ideas designed to help
+                you build a stronger daily routine.
+              </p>
+
+            </div>
+
+            <div className="ai-suggestion-badge">
+
+              <span className="ai-suggestion-badge-dot"></span>
+
+              ✨ Smart Ideas
+
+            </div>
+
+          </div>
 
           {aiSuggestions.length === 0 ? (
-            <p>Add more habits to get recommendations.</p>
-          ) : (
-            aiSuggestions.map((suggestion, index) => (
-              <div
-                key={index}
-                className="suggestion-card"
-              >
-                {suggestion}
 
-                <button
-                  onClick={() =>
-                    addHabit(
-                      suggestion,
-                      "General",
-                      "Easy",
-                      ""
-                    )
-                  }
-                >
-                  ➕ Add
-                </button>
+            <div className="suggestion-empty">
+
+              <div className="suggestion-empty-icon">
+                🤖
+              </div>
+
+              <div>
+
+                <strong>
+                  Your AI recommendations are preparing
+                </strong>
+
+                <p>
+                  Add more habits to receive personalized
+                  suggestions based on your routine.
+                </p>
 
               </div>
-            ))
+
+            </div>
+
+          ) : (
+
+            <div className="suggestion-list">
+
+              {aiSuggestions.map(
+                (suggestion, index) => (
+
+                  <div
+                    key={index}
+                    className="suggestion-card"
+                  >
+
+                    <div className="suggestion-number">
+                      {String(index + 1).padStart(2, "0")}
+                    </div>
+
+                    <div className="suggestion-icon">
+                      💡
+                    </div>
+
+                    <div className="suggestion-content">
+
+                      <span className="suggestion-label">
+                        AI RECOMMENDATION
+                      </span>
+
+                      <span className="suggestion-text">
+                        {suggestion}
+                      </span>
+
+                    </div>
+
+                    <button
+                      className="suggestion-add-button"
+                      onClick={() =>
+                        addHabit(
+                          suggestion,
+                          "General",
+                          "Easy",
+                          ""
+                        )
+                      }
+                    >
+
+                      <span>
+                        ＋
+                      </span>
+
+                      Add Habit
+
+                    </button>
+
+                  </div>
+
+                )
+              )}
+
+            </div>
+
+          )}
+
+          {aiSuggestions.length > 0 && (
+
+            <div className="ai-suggestion-footer">
+
+              <div className="ai-footer-icon">
+                ✨
+              </div>
+
+              <div>
+
+                <strong>
+                  Small habits. Better days.
+                </strong>
+
+                <p>
+                  Choose an idea that fits naturally into
+                  your routine and start building consistency.
+                </p>
+
+              </div>
+
+            </div>
+
           )}
 
         </div>
 
-        <TopHabitWidget habits={habits} />
+        {/* =================================================
+            TOP HABIT
+        ================================================= */}
 
-        <DailyMission habits={habits} />
+        <TopHabitWidget
+          habits={habits}
+        />
 
-        <WeeklyChallenge habits={habits} />
+        {/* =================================================
+            DAILY MISSION
+        ================================================= */}
 
-        <MonthlyChallenge habits={habits} />
+        <DailyMission
+          habits={habits}
+        />
+
+        {/* =================================================
+            WEEKLY CHALLENGE
+        ================================================= */}
+
+        <WeeklyChallenge
+          habits={habits}
+        />
+
+        {/* =================================================
+            MONTHLY CHALLENGE
+        ================================================= */}
+
+        <MonthlyChallenge
+          habits={habits}
+        />
 
       </div>
     </>

@@ -8,33 +8,53 @@ function WeeklyChallenge({ habits }) {
 
   const startOfWeek = new Date(today);
 
-  startOfWeek.setDate(today.getDate() - day);
+  startOfWeek.setDate(
+    today.getDate() - day
+  );
 
-  const weekStart = startOfWeek
-    .toISOString()
-    .split("T")[0];
+ const weekStartString = startOfWeek
+  .toISOString()
+  .split("T")[0];
 
-  let weeklyCompleted = 0;
+const endOfWeek = new Date(startOfWeek);
 
-  habits.forEach((habit) => {
+endOfWeek.setDate(
+  startOfWeek.getDate() + 6
+);
 
-    (habit.completedDates || []).forEach((date) => {
+const weekEndString = endOfWeek
+  .toISOString()
+  .split("T")[0];
 
-      if (date >= weekStart) {
+let weeklyCompleted = 0;
 
-        weeklyCompleted++;
+habits.forEach((habit) => {
 
-      }
+  (habit.completedDates || []).forEach((date) => {
 
-    });
+    if (
+      date >= weekStartString &&
+      date <= weekEndString
+    ) {
+      weeklyCompleted++;
+    }
 
   });
+
+});
 
   const target = 20;
 
   const progress = Math.min(
-    (weeklyCompleted / target) * 100,
+    Math.round(
+      (weeklyCompleted / target) * 100
+    ),
     100
+  );
+
+  const remaining = Math.max(
+    target - weeklyCompleted,
+    0
   );
 
   const completed =
@@ -44,40 +64,178 @@ function WeeklyChallenge({ habits }) {
 
     <div className="weekly-challenge-card">
 
-      <h2>🔥 Weekly Challenge</h2>
+      {/* Header */}
 
-      <p>Complete 20 habits this week</p>
+      <div className="weekly-challenge-header">
 
-      <div className="challenge-bar">
+        <div>
+
+          <span className="weekly-challenge-eyebrow">
+            WEEKLY CHALLENGE
+          </span>
+
+          <h2>
+            🏆 Weekly Challenge
+          </h2>
+
+          <p>
+            Build consistency by completing
+            20 habits this week.
+          </p>
+
+        </div>
 
         <div
-          className="challenge-fill"
-          style={{
-            width: `${progress}%`,
-          }}
-        ></div>
+          className={`weekly-challenge-badge ${
+            completed
+              ? "challenge-completed"
+              : ""
+          }`}
+        >
+          {completed
+            ? "🏆 Completed"
+            : "🔥 Active"}
+        </div>
 
       </div>
 
-      <p>
 
-        {weeklyCompleted} / {target}
+      {/* Main progress */}
 
-      </p>
+      <div className="weekly-challenge-progress">
 
-      {completed ? (
+        <div className="weekly-progress-top">
 
-        <h3>
-          🏆 Weekly Champion
-        </h3>
+          <div>
 
-      ) : (
+            <span>
+              Weekly Progress
+            </span>
 
-        <p>
-          Reward: +300 XP
-        </p>
+            <strong>
+              {weeklyCompleted} / {target}
+            </strong>
 
-      )}
+          </div>
+
+          <div className="weekly-progress-percent">
+            {progress}%
+          </div>
+
+        </div>
+
+        <div className="weekly-challenge-track">
+
+          <div
+            className="weekly-challenge-fill"
+            style={{
+              width: `${progress}%`,
+            }}
+          />
+
+        </div>
+
+      </div>
+
+
+      {/* Stats */}
+
+      <div className="weekly-challenge-stats">
+
+        <div className="weekly-challenge-stat">
+
+          <div className="weekly-stat-icon">
+            ✅
+          </div>
+
+          <div>
+            <strong>
+              {weeklyCompleted}
+            </strong>
+
+            <span>
+              Completed
+            </span>
+          </div>
+
+        </div>
+
+
+        <div className="weekly-challenge-stat">
+
+          <div className="weekly-stat-icon">
+            ⏳
+          </div>
+
+          <div>
+            <strong>
+              {remaining}
+            </strong>
+
+            <span>
+              Remaining
+            </span>
+          </div>
+
+        </div>
+
+
+        <div className="weekly-challenge-stat">
+
+          <div className="weekly-stat-icon">
+            ⭐
+          </div>
+
+          <div>
+            <strong>
+              +300
+            </strong>
+
+            <span>
+              XP Reward
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* Footer */}
+
+      <div
+        className={`weekly-challenge-footer ${
+          completed
+            ? "weekly-footer-completed"
+            : ""
+        }`}
+      >
+
+        {completed ? (
+
+          <>
+            🏆 <strong>Weekly Champion!</strong>
+            {" "}You completed the challenge.
+          </>
+
+        ) : remaining === 1 ? (
+
+          <>
+            🔥 Just <strong>1 habit</strong> left
+            to complete this week's challenge!
+          </>
+
+        ) : (
+
+          <>
+            💪 Complete{" "}
+            <strong>{remaining} more habits</strong>
+            {" "}to earn +300 XP.
+          </>
+
+        )}
+
+      </div>
 
     </div>
 

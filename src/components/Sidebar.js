@@ -1,162 +1,177 @@
 import React from "react";
 import "./Sidebar.css";
 
-function Sidebar({
-  activePage,
-  setActivePage,
-}) {
+function Sidebar({ activePage, setActivePage }) {
+  const menuItems = [
+    {
+      id: "dashboard",
+      icon: "📊",
+      label: "Dashboard",
+    },
+    {
+      id: "habits",
+      icon: "✅",
+      label: "Habits",
+    },
+    {
+      id: "analytics",
+      icon: "📈",
+      label: "Analytics",
+    },
+    {
+      id: "achievements",
+      icon: "🏆",
+      label: "Achievements",
+    },
+    {
+      id: "themes",
+      icon: "🎨",
+      label: "Themes",
+    },
+    {
+      id: "profile",
+      icon: "👤",
+      label: "Profile",
+    },
+    {
+      id: "settings",
+      icon: "⚙️",
+      label: "Settings",
+    },
+    {
+      id: "weeklyReport",
+      icon: "📊",
+      label: "Weekly Report",
+    },
+    {
+      id: "planner",
+      icon: "📅",
+      label: "Tomorrow Planner",
+    },
+    {
+      id: "goal-generator",
+      icon: "🎯",
+      label: "Goal Generator",
+    },
+    {
+      id: "coach",
+      icon: "🤖",
+      label: "AI Coach",
+    },
+  ];
 
   return (
+    <aside className="sidebar-menu">
 
-    <div className="sidebar-menu">
+      {/* Brand */}
+      <div className="sidebar-brand">
+        <div className="sidebar-logo">
+          🚀
+        </div>
 
-      <h2>🚀 Habit Tracker</h2>
+        <div className="sidebar-brand-text">
+          <h2>HabitFlow</h2>
+          <span>Build better habits</span>
+        </div>
+      </div>
 
-      <button
-  className={
-    activePage === "dashboard"
-      ? "active"
-      : ""
-  }
-  onClick={() =>
-    setActivePage("dashboard")
-  }
->
-  📊 Dashboard
-</button>
+      {/* Navigation */}
+      <nav className="sidebar-navigation">
 
-     <button
-  className={
-    activePage === "habits"
-      ? "active"
-      : ""
-  }
-  onClick={() =>
-    setActivePage("habits")
-  }
->
-  ✅ Habits
-</button>
+        <div className="sidebar-section-title">
+          WORKSPACE
+        </div>
 
-      <button
-  className={
-    activePage === "analytics"
-      ? "active"
-      : ""
-  }
-  onClick={() =>
-    setActivePage("analytics")
-  }
->
-  📈 Analytics
-</button>
+        {menuItems.slice(0, 6).map((item) => (
+          <button
+            key={item.id}
+            className={`sidebar-item ${
+              activePage === item.id ? "active" : ""
+            }`}
+            onClick={() => setActivePage(item.id)}
+          >
+            <span className="sidebar-item-icon">
+              {item.icon}
+            </span>
 
-     <button
-  className={
-    activePage === "achievements"
-      ? "active"
-      : ""
-  }
-  onClick={() =>
-    setActivePage("achievements")
-  }
->
-  🏆 Achievements
-</button>
+            <span className="sidebar-item-label">
+              {item.label}
+            </span>
 
-     <button
-  className={
-    activePage === "themes"
-      ? "active"
-      : ""
-  }
-  onClick={() =>
-    setActivePage("themes")
-  }
->
-  🎨 Themes
-</button>
-<button
+            {activePage === item.id && (
+              <span className="sidebar-active-indicator" />
+            )}
+          </button>
+        ))}
 
-className={
-activePage==="profile"
-? "active"
-: ""
-}
+        <div className="sidebar-section-title sidebar-section-spacer">
+          MANAGEMENT
+        </div>
 
-onClick={()=>
-setActivePage("profile")
-}
+        {menuItems.slice(6, 9).map((item) => (
+          <button
+            key={item.id}
+            className={`sidebar-item ${
+              activePage === item.id ? "active" : ""
+            }`}
+            onClick={() => setActivePage(item.id)}
+          >
+            <span className="sidebar-item-icon">
+              {item.icon}
+            </span>
 
->
+            <span className="sidebar-item-label">
+              {item.label}
+            </span>
 
-👤 Profile
+            {activePage === item.id && (
+              <span className="sidebar-active-indicator" />
+            )}
+          </button>
+        ))}
 
-</button>
+        <div className="sidebar-section-title sidebar-section-spacer">
+          SMART TOOLS
+        </div>
 
-<button
-  className={
-    activePage === "settings"
-      ? "active"
-      : ""
-  }
-  onClick={() =>
-    setActivePage("settings")
-  }
->
-  ⚙️ Settings
-</button>
-<button
-  className={
-    activePage === "weeklyReport"
-      ? "active"
-      : ""
-  }
-  onClick={() =>
-    setActivePage("weeklyReport")
-  }
->
-  📊 Weekly Report
-</button>
-<button
+        {menuItems.slice(9).map((item) => (
+          <button
+            key={item.id}
+            className={`sidebar-item ${
+              activePage === item.id ? "active" : ""
+            }`}
+            onClick={() => setActivePage(item.id)}
+          >
+            <span className="sidebar-item-icon">
+              {item.icon}
+            </span>
 
-onClick={() =>
+            <span className="sidebar-item-label">
+              {item.label}
+            </span>
 
-setActivePage("planner")
+            {activePage === item.id && (
+              <span className="sidebar-active-indicator" />
+            )}
+          </button>
+        ))}
 
-}
+      </nav>
 
->
+      {/* Bottom Card */}
+      <div className="sidebar-bottom-card">
+        <div className="sidebar-bottom-icon">
+          ✨
+        </div>
 
-📅 Tomorrow Planner
+        <div>
+          <strong>Stay consistent</strong>
+          <span>Small steps every day.</span>
+        </div>
+      </div>
 
-</button>
-<button
-  className={activePage === "goal-generator" ? "active" : ""}
-  onClick={() => setActivePage("goal-generator")}
->
-  🎯 Goal Generator
-</button>
-<button
-  className={
-    activePage === "coach"
-      ? "active"
-      : ""
-  }
-  onClick={() =>
-    setActivePage("coach")
-  }
->
-
-🤖 AI Coach
-
-</button>
-
-
-    </div>
-
+    </aside>
   );
-
 }
 
 export default Sidebar;

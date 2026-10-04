@@ -120,15 +120,15 @@ const newHabit = {
   difficulty: difficulty,
   reminderTime,
   order: habits.length,
+  createdAt: new Date().toISOString(),
   streak: 0,
   xp: 0,
   longestStreak: 0,
   missedDays: 0,
   notes: "",
   completedDates: [],
-  streakHistory: [],     // ← ADD THIS
+  streakHistory: [],
   uid: user.uid,
-  createdAt: new Date().toISOString(),
   monthlyChallenge: false,
 };
 console.log(
@@ -422,14 +422,12 @@ const weeklyCompleted = habits.reduce(
 );
 
 // Reward only when reaching 20
-if (weeklyCompleted === 20) {
-
+if (weeklyCompleted + 1 === 20) {
   earnedXP += 300;
 
   toast.success(
     "🏆 Weekly Challenge Completed! +300 XP"
   );
-
 }
 // Daily Mission Bonus
 const completedToday =
@@ -438,7 +436,7 @@ const completedToday =
   ).length + 1;
 
 if (completedToday >= 3) {
-  earnedXP += 100;
+  earnedXP += 10;
 
   toast.success(
     "🎯 Daily Mission Completed! +100 XP"

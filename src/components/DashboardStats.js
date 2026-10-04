@@ -1,3 +1,5 @@
+import React from "react";
+
 function DashboardStats({ habits }) {
 
   const totalHabits = habits.length;
@@ -10,13 +12,13 @@ function DashboardStats({ habits }) {
       habit.completedDates?.includes(today)
   ).length;
 
-  const bestStreak = habits.length
-    ? Math.max(
-        ...habits.map(
-          (habit) => habit.streak || 0
-        )
+const bestStreak = habits.length
+  ? Math.max(
+      ...habits.map(
+        (habit) => habit.longestStreak || 0
       )
-    : 0;
+    )
+  : 0;
 
   const averageProgress =
     habits.length > 0
@@ -54,41 +56,72 @@ function DashboardStats({ habits }) {
         ).toFixed(0)
       : 0;
 
+  const stats = [
+    {
+      icon: "📊",
+      value: totalHabits,
+      label: "Total Habits",
+      type: "primary",
+    },
+    {
+      icon: "✅",
+      value: completedToday,
+      label: "Completed Today",
+      type: "success",
+    },
+    {
+      icon: "🔥",
+      value: bestStreak,
+      label: "Best Streak",
+      type: "warning",
+    },
+    {
+      icon: "🏆",
+      value: `${averageProgress}%`,
+      label: "Average Progress",
+      type: "info",
+    },
+  ];
+
   return (
 
     <div className="dashboard-stats">
 
-      <div className="stat-card">
-        📊
-        <h3>{totalHabits}</h3>
-        <p>Total Habits</p>
-      </div>
+      {stats.map((stat) => (
 
-      <div className="stat-card">
-        ✅
-        <h3>{completedToday}</h3>
-        <p>Completed Today</p>
-      </div>
-      
+        <div
+          className={`stat-card stat-${stat.type}`}
+          key={stat.label}
+        >
 
-      
+          <div className="stat-card-top">
 
-      <div className="stat-card">
-        🔥
-        <h3>{bestStreak}</h3>
-        <p>Best Streak</p>
-      </div>
+            <div className="stat-icon">
+              {stat.icon}
+            </div>
 
-      <div className="stat-card">
-        🏆
-        <h3>{averageProgress}%</h3>
-        <p>Average Progress</p>
-      </div>
+            <span className="stat-label">
+              {stat.label}
+            </span>
+
+          </div>
+
+          <div className="stat-value">
+            {stat.value}
+          </div>
+
+          <div className="stat-footer">
+            <span className="stat-status-dot" />
+            Tracking your progress
+          </div>
+
+        </div>
+
+      ))}
 
     </div>
 
   );
-
 }
 
 export default DashboardStats;

@@ -490,11 +490,10 @@ function App() {
     );
 
 
-  const level =
+const level =
     Math.floor(
       totalXP / 100
     ) + 1;
-
 
   const progress =
     totalXP % 100;
@@ -1053,6 +1052,7 @@ function App() {
   // LOADING SCREEN
   // =====================================================
 
+
   if (loading) {
     return (
       <div className="loading-screen">
@@ -1064,7 +1064,6 @@ function App() {
       </div>
     );
   }
-
 
   // =====================================================
   // MAIN UI

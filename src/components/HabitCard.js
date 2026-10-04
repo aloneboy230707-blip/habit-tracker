@@ -1,36 +1,35 @@
-import React, {
-  useState,
-} from "react";
+import React, { useState } from "react";
 
 const getCategoryIcon = (category) => {
-
-  switch(category) {
-
+  switch (category) {
     case "Fitness":
       return "💪";
-
     case "Study":
       return "📚";
-
     case "Health":
       return "❤️";
-
     case "Reading":
       return "📖";
-
     case "Meditation":
       return "🧘";
-
     case "Work":
       return "💼";
-
     case "Finance":
       return "💰";
-
     default:
       return "📌";
   }
+};
 
+const getDifficultyClass = (difficulty) => {
+  switch (difficulty) {
+    case "Hard":
+      return "hard";
+    case "Medium":
+      return "medium";
+    default:
+      return "easy";
+  }
 };
 
 function HabitCard({
@@ -44,287 +43,318 @@ function HabitCard({
   deleteHabit,
   updateNotes,
 }) {
+  const [noteText, setNoteText] = useState(item.notes || "");
 
-  const [noteText, setNoteText] =
-  useState(item.notes || "");
-  // Get habit creation date
+const validCompletedDates = (
+  item.completedDates || []
+)
+  .filter(
+    (date) => !isNaN(new Date(date))
+  )
+  .sort();
+
+const fallbackCreatedDate =
+  validCompletedDates.length > 0
+    ? new Date(
+        `${validCompletedDates[0]}T00:00:00`
+      )
+    : new Date();
+
 const createdDate =
   item.createdAt &&
   !isNaN(new Date(item.createdAt))
     ? new Date(item.createdAt)
-    : new Date();
+    : fallbackCreatedDate;
 
-// Today's date
 const today = new Date();
 
-// Calculate difference in milliseconds
-const diffTime = today - createdDate;
+const diffTime = Math.max(
+  0,
+  today - createdDate
+);
 
-// Convert to number of days
-const daysSinceCreated =
-  Math.max(
-    1,
-    Math.floor(
-      diffTime /
-      (1000 * 60 * 60 * 24)
-    ) + 1
-  );
-  const completedCount =
-  new Set(item.completedDates || []).size;
+const daysSinceCreated = Math.max(
+  1,
+  Math.floor(
+    diffTime / (1000 * 60 * 60 * 24)
+  ) + 1
+);
 
-// Calculate progress percentage
+const completedCount = new Set(
+  validCompletedDates
+).size;
+
 const progress =
-  Math.min(
-    100,
-    (completedCount / daysSinceCreated) * 100
-  );
+  daysSinceCreated <= 0
+    ? 0
+    : Math.min(
+        100,
+        (completedCount / daysSinceCreated) * 100
+      );
 
+  const streak = item.streak || 0;
+  const freezeCount = item.freezeCount || 0;
+  const xp = item.xp || 0;
+  const missedDays = item.missedDays || 0;
+  const longestStreak = item.longestStreak || 0;
+
+  const category = item.category || "General";
+  const difficulty = item.difficulty || "Easy";
+
+  const progressClass =
+    progress < 30
+      ? "low"
+      : progress < 70
+      ? "medium"
+      : "high";
 
   return (
-
-    <div
-  className={`habit-card ${
-  item.category
-    ? item.category.toLowerCase()
-    : "general"
-}`}
->
-
-      <div className="habit-left">
-
-        <div>
-
-          {editingId === item.id ? (
-
-            <input
-              value={editedText}
-              onChange={(e) =>
-                setEditedText(
-                  e.target.value
-                )
-              }
-            />
-
-          ) : (
-
-           <>
-  <h3>
-    {getCategoryIcon(item.category)}
-    {" "}
-    {item.name}
-  </h3>
-
-  <div className="category-badge">
-    {item.category}
-  </div>
-</>
-
-
-          )}
-
-          <p>
-            <span className="label">
-              🔥 Streak
-            </span>
-
-            : {item.streak}
-          </p>
-          <p>
-  <span className="label">
-    ❄️ Freeze
-  </span>
-
-  : {item.freezeCount || 0}
-</p>
-<p>
-  <span className="label">
-    ⭐ XP
-  </span>
-
-  : {item.xp || 0}
-</p>
-
-          <p>
-            <span className="label">
-              ❌ Missed Days
-            </span>
-
-            : {item.missedDays || 0}
-          </p>
-
-          <p>
-            <span className="label">
-              🏆 Longest
-            </span>
-
-            : {item.longestStreak || 0}
-          </p>
-
-          <details className="notes-box">
-
-            <summary>
-              📝 Notes
-            </summary>
-
-            <textarea
-              placeholder="Write notes..."
-              value={noteText}
-              onChange={(e) =>
-                setNoteText(
-                  e.target.value
-                )
-              }
-            />
-
-            <button
-              onClick={() =>
-                updateNotes(
-                  item.id,
-                  noteText
-                )
-              }
-            >
-              Save Notes
-            </button>
-
-          </details>
-
-          <p>
-  <span className="label">
-    📅 Completed
-  </span>
-
-  : {completedCount}
-</p>
-
-<p>
-  <span className="label">
-    📆 Days Active
-  </span>
-
-  : {daysSinceCreated}
-</p>
-<p>
-  <span className="label">
-    🗓️ Started
-  </span>
-
-  : {createdDate.toLocaleDateString()}
-</p>
-
-<p>
-  <span className="label">
-    ✅ Completion
-  </span>
-
-  : {completedCount}/{daysSinceCreated}
-</p>
-
-<div className="progress-section">
-
-  <p>
-
-    <span className="label">
-      📈 Progress
-    </span>
-
-    : {progress.toFixed(0)}%
-
-  </p>
-
-  <div className="progress-bar">
-
-    <div
-      className={`progress-fill ${
-        progress < 30
-          ? "low"
-          : progress < 70
-          ? "medium"
-          : "high"
+    <article
+      className={`premium-habit-card ${
+        category.toLowerCase()
       }`}
-      style={{
-        width: `${progress}%`,
-      }}
-    ></div>
+    >
+      {/* TOP SECTION */}
+      <div className="habit-card-top">
+        <div className="habit-card-identity">
+          <div className="habit-category-icon">
+            {getCategoryIcon(category)}
+          </div>
 
-  </div>
+          <div className="habit-title-area">
+            {editingId === item.id ? (
+              <input
+                className="habit-edit-input"
+                value={editedText}
+                onChange={(e) =>
+                  setEditedText(e.target.value)
+                }
+                autoFocus
+              />
+            ) : (
+              <>
+                <h3>{item.name}</h3>
 
-</div>
+                <div className="habit-meta">
+                  <span className="habit-category-badge">
+                    {getCategoryIcon(category)} {category}
+                  </span>
 
-</div>
+                  <span
+                    className={`habit-difficulty-badge ${getDifficultyClass(
+                      difficulty
+                    )}`}
+                  >
+                    {difficulty === "Hard"
+                      ? "🔴"
+                      : difficulty === "Medium"
+                      ? "🟡"
+                      : "🟢"}{" "}
+                    {difficulty}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
 
+        <div className="habit-status">
+          <span className="habit-status-dot"></span>
+          Active
+        </div>
       </div>
 
-      <div className="habit-right">
+      {/* STATS */}
+      <div className="habit-stat-grid">
+        <div className="habit-stat-card">
+          <span className="habit-stat-icon">🔥</span>
 
+          <div>
+            <small>Streak</small>
+            <strong>{streak}</strong>
+          </div>
+        </div>
+
+        <div className="habit-stat-card">
+          <span className="habit-stat-icon">⭐</span>
+
+          <div>
+            <small>XP</small>
+            <strong>{xp}</strong>
+          </div>
+        </div>
+
+        <div className="habit-stat-card">
+          <span className="habit-stat-icon">🏆</span>
+
+          <div>
+            <small>Best</small>
+            <strong>{longestStreak}</strong>
+          </div>
+        </div>
+
+        <div className="habit-stat-card">
+          <span className="habit-stat-icon">📅</span>
+
+          <div>
+            <small>Completed</small>
+            <strong>{completedCount}</strong>
+          </div>
+        </div>
+      </div>
+
+      {/* PROGRESS */}
+      <div className="habit-progress-section">
+        <div className="habit-progress-header">
+          <div>
+            <span>Consistency</span>
+            <small>
+              {completedCount} of {daysSinceCreated} days
+            </small>
+          </div>
+
+          <strong>{progress.toFixed(0)}%</strong>
+        </div>
+
+        <div className="habit-progress-track">
+          <div
+            className={`habit-progress-fill ${progressClass}`}
+            style={{
+              width: `${progress}%`,
+            }}
+          ></div>
+        </div>
+      </div>
+
+      {/* SECONDARY INFORMATION */}
+      <div className="habit-info-row">
+        <div>
+          <span>❌</span>
+          <small>Missed</small>
+          <strong>{missedDays}</strong>
+        </div>
+
+        <div>
+          <span>❄️</span>
+          <small>Freezes</small>
+          <strong>{freezeCount}</strong>
+        </div>
+
+        <div>
+          <span>📆</span>
+          <small>Days Active</small>
+          <strong>{daysSinceCreated}</strong>
+        </div>
+
+        <div>
+          <span>🗓️</span>
+          <small>Tracking Since</small>
+          <strong>
+            {createdDate.toLocaleDateString()}
+          </strong>
+        </div>
+      </div>
+
+      {/* NOTES */}
+      <details className="premium-notes-box">
+        <summary>
+          <span>📝 Notes</span>
+          <span className="notes-toggle">
+            View / Edit
+          </span>
+        </summary>
+
+        <div className="notes-content">
+          <textarea
+            placeholder="Write something about this habit..."
+            value={noteText}
+            onChange={(e) =>
+              setNoteText(e.target.value)
+            }
+          />
+
+          <button
+            className="save-notes-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+
+              updateNotes(
+                item.id,
+                noteText
+              );
+            }}
+          >
+            💾 Save Notes
+          </button>
+        </div>
+      </details>
+
+      {/* ACTIONS */}
+      <div className="habit-card-actions">
         <button
-          className="complete-btn"
-          onClick={() =>
-          completeHabit(
-  item.id,
-  item.streak,
-  item.completedDates,
-  item.longestStreak,
-  item.missedDays,
-  item.freezeCount,
-  item.xp,
-  item.streakHistory,
-  item.difficulty
-)
-          }
+          className="complete-btn premium-complete-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+
+            completeHabit(
+              item.id,
+              item.streak,
+              item.completedDates,
+              item.longestStreak,
+              item.missedDays,
+              item.freezeCount,
+              item.xp,
+              item.streakHistory,
+              item.difficulty
+            );
+          }}
         >
-          Complete
+          ✓ Complete
         </button>
 
         {editingId === item.id ? (
-
           <button
-  onClick={() =>
-    editHabit(
-      item.id,
-      editedText,
-      setEditingId,
-      setEditedText
-    )
-  }
->
-  Save
-</button>
+            className="edit-btn premium-save-btn"
+            onClick={(e) => {
+              e.stopPropagation();
 
-        ) : (
-
-          <button
-            className="edit-btn"
-            onClick={() => {
-
-              setEditingId(item.id);
-
-              setEditedText(
-                item.name
+              editHabit(
+                item.id,
+                editedText,
+                setEditingId,
+                setEditedText
               );
-
             }}
           >
-            Edit
+            💾 Save
           </button>
+        ) : (
+          <button
+            className="edit-btn premium-edit-btn"
+            onClick={(e) => {
+              e.stopPropagation();
 
+              setEditingId(item.id);
+              setEditedText(item.name);
+            }}
+          >
+            ✏️ Edit
+          </button>
         )}
 
         <button
-          className="delete-btn"
-          onClick={() =>
-            deleteHabit(item.id)
-          }
+          className="delete-btn premium-delete-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+
+            deleteHabit(item.id);
+          }}
         >
-          Delete
+          🗑️ Delete
         </button>
-
       </div>
-
-    </div>
-
+    </article>
   );
-
 }
 
 export default HabitCard;

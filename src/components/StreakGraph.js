@@ -12,6 +12,7 @@ import {
   LineElement,
   Tooltip,
   Legend,
+  Filler,
 } from "chart.js";
 
 ChartJS.register(
@@ -20,7 +21,8 @@ ChartJS.register(
   PointElement,
   LineElement,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 function StreakGraph({ habits }) {
@@ -33,6 +35,11 @@ function StreakGraph({ habits }) {
     (habit) => habit.streak || 0
   );
 
+  const highestStreak =
+    streaks.length > 0
+      ? Math.max(...streaks)
+      : 0;
+
   const data = {
 
     labels,
@@ -40,38 +47,205 @@ function StreakGraph({ habits }) {
     datasets: [
 
       {
-
         label: "Current Streak",
 
         data: streaks,
 
-        borderColor: "#1e1a33",
+        borderColor: "#8B5CF6",
 
         backgroundColor:
-          "rgba(39, 118, 125, 0.2)",
+          "rgba(139, 92, 246, 0.10)",
+
+        pointBackgroundColor:
+          "#A78BFA",
+
+        pointBorderColor:
+          "#111827",
+
+        pointBorderWidth: 2,
+
+        pointRadius: 4,
+
+        pointHoverRadius: 6,
+
+        borderWidth: 2.5,
 
         tension: 0.4,
 
         fill: true,
-
       },
 
     ],
 
   };
 
+  const options = {
+
+    responsive: true,
+
+    maintainAspectRatio: false,
+
+    interaction: {
+      intersect: false,
+      mode: "index",
+    },
+
+    plugins: {
+
+      legend: {
+        display: false,
+      },
+
+      tooltip: {
+
+        backgroundColor:
+          "#111827",
+
+        borderColor:
+          "rgba(139, 92, 246, 0.20)",
+
+        borderWidth: 1,
+
+        titleColor:
+          "#C4B5FD",
+
+        bodyColor:
+          "#F8FAFC",
+
+        padding: 12,
+
+        cornerRadius: 10,
+
+      },
+
+    },
+
+    scales: {
+
+      x: {
+
+        grid: {
+          display: false,
+        },
+
+        ticks: {
+          color: "#64748B",
+
+          font: {
+            size: 10,
+          },
+
+          maxRotation: 45,
+
+          minRotation: 0,
+        },
+
+        border: {
+          display: false,
+        },
+
+      },
+
+      y: {
+
+        beginAtZero: true,
+
+        grid: {
+          color:
+            "rgba(255,255,255,0.045)",
+        },
+
+        ticks: {
+          color: "#64748B",
+
+          precision: 0,
+
+          font: {
+            size: 10,
+          },
+        },
+
+        border: {
+          display: false,
+        },
+
+      },
+
+    },
+
+  };
+
   return (
 
-    <div className="streak-graph">
+    <div className="streak-graph premium-chart-card">
 
-      <h2>📈 Streak Graph</h2>
+      <div className="chart-card-header">
 
-      <Line data={data} />
+        <div>
+
+          <span className="chart-eyebrow">
+            CONSISTENCY
+          </span>
+
+          <h2>
+            🔥 Streak Performance
+          </h2>
+
+          <p>
+            Compare your current streak across habits.
+          </p>
+
+        </div>
+
+        <div className="chart-header-stat">
+
+          <strong>
+            {highestStreak}
+          </strong>
+
+          <span>
+            best streak
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div className="streak-chart-wrapper">
+
+        {habits.length === 0 ? (
+
+          <div className="empty-chart-state">
+
+            <div>
+              🔥
+            </div>
+
+            <strong>
+              No streak data yet
+            </strong>
+
+            <p>
+              Complete a habit to start building your streak.
+            </p>
+
+          </div>
+
+        ) : (
+
+          <Line
+            data={data}
+            options={options}
+          />
+
+        )}
+
+      </div>
 
     </div>
 
   );
-
 }
 
 export default StreakGraph;
